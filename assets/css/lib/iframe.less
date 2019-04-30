@@ -1,0 +1,39 @@
+body.entry_relationship  {
+	padding-left: 0;
+
+	#tools {
+		.close {
+			background-color: transparent;
+			padding: 0;
+			color: var(--color-main);
+
+			&:hover {
+				color: var(--color-accent);
+			}
+		}
+	}
+
+	#contents {
+		padding: 0;
+		
+		form {
+			border-radius: 0;
+		}
+
+		.actions .modal {
+			display: none;
+		}
+	}
+
+	#context {
+		left: var(--spacing-smaller);
+	}
+
+	.session,
+	.drawer,
+	.notifier,
+	#header,
+	#breadcrumbs nav {
+		display: none;
+	}
+}

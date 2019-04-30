@@ -1,223 +1,12 @@
-/*
-	Copyright: Deux Huit Huit 2014
-	License: MIT, see the LICENCE file
-*/
-
 /**
- * JS for entry relationship field
+ * field.js
+ * @author Deux Huit Huit
+ * @license MIT
  */
-
-/* Publish page customization */
 (function ($, S) {
 
 	'use strict';
 
-	var win = $(window);
-	var html = $('html');
-	var body = $();
-	var ctn = $();
-	var loc = window.location.toString();
-	var opacity = 0.7;
-	var opacityFactor = 0.1;
-
-	var updateOpacity = function(direction) {
-		if (direction !== -1) {
-			direction = 1;
-		}
-		opacity = opacity + (direction * opacityFactor);
-		var color = ctn.css('background-color');
-		color = color.replace(/rgba\((\d+,)\s*(\d+,)\s*(\d+,)\s*[^\)]+\)/i, 'rgba($1 $2 $3 ' + opacity + ')');
-		ctn.css('background-color', color);
-	};
-
-	var removeUI = function () {
-		var parent = window.parent.Symphony.Extensions.EntryRelationship;
-		var saved = loc.indexOf('/saved/') !== -1;
-		var created = loc.indexOf('/created/') !== -1;
-
-		if (saved || created) {
-			if (created) {
-				parent.link(S.Context.get().env.entry_id);
-			}
-			parent.hide(true);
-			return;
-		}
-
-		var form = S.Elements.contents.find('form');
-
-		if (!!parent) {
-			// block already link items
-			$.each(parent.current.values(), function (index, value) {
-				form.find('#id-' + value).addClass('inactive er-already-linked');
-			});
-		}
-
-		body.addClass('entry_relationship');
-
-		// remove everything in header, except notifier
-		S.Elements.header.children().not('.notifier').remove();
-		// Remove everything from the notifier except errors
-		S.Elements.header.find('.notifier .notice:not(.error)').trigger('detach.notify');
-		form.find('>table th:not([id])').remove();
-		form.find('>table td:not([class]):not(:first-child)').each(function () {
-			var td = $(this);
-			td.find('input').appendTo(td.prev('td'));
-			td.remove();
-		});
-		// Close support
-		var btnClose = $('<button />').attr('type', 'button').append('<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="19.9px" height="19.9px" viewBox="0 0 19.9 19.9"><path fill="currentColor" d="M1,19.9c-0.3,0-0.5-0.1-0.7-0.3c-0.4-0.4-0.4-1,0-1.4L18.2,0.3c0.4-0.4,1-0.4,1.4,0s0.4,1,0,1.4L1.7,19.6C1.5,19.8,1.3,19.9,1,19.9z"/><path fill="currentColor" d="M18.9,19.9c-0.3,0-0.5-0.1-0.7-0.3L0.3,1.7c-0.4-0.4-0.4-1,0-1.4s1-0.4,1.4,0l17.9,17.9c0.4,0.4,0.4,1,0,1.4C19.4,19.8,19.2,19.9,18.9,19.9z"/></svg>').append('<span><span>Close</span></span>').click(function (e) {
-			parent.cancel();
-			parent.hide();
-		});
-		var btnCloseWrapper = $('<li />').append(btnClose);
-		$(document).on('keydown', function (e) {
-			if (e.which === 27) {
-				parent.cancel();
-				parent.hide();
-				e.preventDefault();
-				return false;
-			}
-		});
-
-		// Drawers support
-		S.Elements.wrapper.find('.actions').filter(function () {
-			return body.hasClass('page-index') || $(this).is('ul');
-		}).find('li').filter(function () {
-			return !$(this).find('a[href^="#drawer-"]').length;
-		}).remove().end().end().append(btnCloseWrapper);
-
-		// makes all link open in new window/tab
-		form.find('table tr td a').attr('target', '_blank');
-		// disable breadcrumbs links
-		S.Elements.context.find('#breadcrumbs nav a').attr('href', '#').click(function (e) {
-			e.preventDefault();
-			return false;
-		});
-		form.find('table tr td').css('cursor', 'pointer').click(function (e) {
-			var t = $(this);
-			var target = $(e.target);
-
-			e.preventDefault();
-
-			// click on a link, but not in the first td
-			if (!!target.closest('a').length && !target.closest('tr td:first-child').length) {
-				// bail out
-				return true;
-			}
-
-			if (!t.closest('.er-already-linked').length) {
-				var tr = t.closest('tr');
-				var entryId = tr.attr('id').replace('id-', '');
-				var timestamp = tr.find('input#entry-' + entryId).val();
-				tr.addClass('selected');
-				parent.link(entryId, timestamp);
-				parent.hide();
-			}
-
-			return false;
-		});
-		win.focus();
-	};
-
-	var appendUI = function () {
-		ctn = $('<div id="entry-relationship-ctn" />');
-		body.append(ctn);
-		ctn.on('click', function () {
-			S.Extensions.EntryRelationship.cancel();
-			S.Extensions.EntryRelationship.hide();
-		});
-	};
-
-	var defineExternals = function () {
-		var self = {
-			hide: function (reRender) {
-				ctn.removeClass('show').find('.iframe>iframe').fadeOut(1, function () {
-					// raise unload events
-					var iw = this.contentWindow;
-					var i$ = iw.jQuery;
-					if (!!i$) {
-						i$(iw).trigger('beforeunload').trigger('unload');
-					}
-					// remove iframe
-					$(this).empty().remove();
-					html.removeClass('no-scroll');
-					ctn.css('background-color', '');
-				});
-				if (window.parent !== window && window.parent.Symphony.Extensions.EntryRelationship) {
-					window.parent.Symphony.Extensions.EntryRelationship.updateOpacity(-1);
-				}
-				if (reRender) {
-					self.current.render();
-				}
-				self.current = null;
-				win.focus();
-			},
-			show: function (url) {
-				var ictn = $('<div />').attr('class', 'iframe');
-				var iframe = $('<iframe />').attr('src', url);
-
-				html.addClass('no-scroll');
-				ictn.append(iframe);
-				ctn.empty().append(ictn);
-
-				S.Utilities.requestAnimationFrame(function () {
-					ctn.addClass('show');
-
-					if (window.parent !== window && window.parent.Symphony.Extensions.EntryRelationship) {
-						window.parent.Symphony.Extensions.EntryRelationship.updateOpacity(1);
-					}
-				});
-			},
-			link: function (entryId, timestamp) {
-				if (!self.current) {
-					console.error('Parent not found.');
-					return;
-				}
-				self.current.link(entryId, timestamp);
-			},
-			cancel: function () {
-				if (!self.current) {
-					console.error('Parent not found.');
-					return;
-				}
-				self.current.cancel();
-			},
-			updateOpacity: updateOpacity,
-			instances: {},
-			current: null
-		};
-
-		// export
-		S.Extensions.EntryRelationship = self;
-	};
-
-	var init = function () {
-		body = $('body');
-		if (body.is('#publish')) {
-			var er = window.parent !== window && window.parent.Symphony &&
-				window.parent.Symphony.Extensions.EntryRelationship;
-			if (!!er && !!er.current) {
-				// child (iframe)
-				removeUI();
-			}
-
-			// parent (can always be parent)
-			appendUI();
-		}
-	};
-
-	defineExternals();
-
-	$(init);
-
-})(jQuery, Symphony);
-
-/* Field behavior */
-(function ($, S) {
-
-	'use strict';
-
-	var doc = $(document);
 	var notifier;
 	var entryId = S.Context.get().env.entry_id;
 
@@ -315,6 +104,7 @@
 		val.changed = !found;
 		return val;
 	};
+
 	var unlink = function (val, entryId) {
 		var found = false;
 
@@ -327,6 +117,7 @@
 		val.changed = found;
 		return val;
 	};
+
 	var replace = function (val, entryId, replaceId) {
 		var found = false;
 
@@ -339,6 +130,7 @@
 		val.changed = found;
 		return val;
 	};
+
 	var insert = function (val, insertPosition, entryId) {
 		var found = false;
 		for (var x = 0; x < val.length; x++) {
@@ -349,8 +141,7 @@
 		if (!found) {
 			if (insertPosition === undefined || insertPosition >= val.length) {
 				val.push(entryId);
-			}
-			else {
+			} else {
 				val.splice(insertPosition + 1, 0, entryId);
 			}
 		}
@@ -374,14 +165,97 @@
 		var memento;
 		var replaceId;
 		var insertPosition;
+		var isRendering = false;
+
 		var storageKeys = {
 			selection: 'symphony.ERF.section-selection-' + id,
 			collapsible: 'symphony.collapsible.ERF.' + id + '.collasped'
 		};
+
 		var values = function () {
 			var val = hidden.val() || '';
 			return val.split(',').filter(identity);
 		};
+
+		var updateActionBar = function (li) {
+			var actionBar = t.find('.action-bar');
+			var maxReached = !!maximum && li.length >= maximum;
+			actionBar[maxReached ? 'addClass' : 'removeClass']('max-reached');
+		};
+
+		var updateSearchUrl = function (section) {
+			t.find('[data-search]').attr('data-url', searchurl(section, hidden.val()));
+		};
+
+		var render = function () {
+			if (isRendering) {
+				return;
+			}
+			if (!hidden.val()) {
+				updateActionBar($());
+				return;
+			}
+			isRendering = true;
+			$.get(renderurl(hidden.val(), fieldId, debug)).done(function (data) {
+				data = $(data);
+				var error = data.find('error');
+				var li = data.find('> li');
+				var fx = !li.length ? 'addClass' : 'removeClass';
+
+				if (!!error.length) {
+					list.empty().append(
+						$('<li />').text(
+							S.Language.get('Error while rendering field “{$title}”: {$error}', {
+								title: label,
+								error: error.text()
+							})
+						).addClass('error invalid')
+					);
+					frame.addClass('empty');
+				} else {
+					list.empty().append(li);
+					frame[fx]('empty');
+
+					if (!list.hasClass('orderable') && !!list.find('[data-orderable-handle]').length) {
+						list.symphonyOrderable({
+							items: 'li:has([data-orderable-handle])',
+							handles: '.grab-handle',
+							ignore: '.ignore-orderable, .ignore',
+						});
+					}
+					if (list.is('[data-collapsible]') && !!list.find('[data-collapsible-handle]').length) {
+						if (!list.hasClass('collapsible')) {
+							list.symphonyCollapsible({
+								items: 'li:has([data-collapsible-content]):has([data-collapsible-handle])',
+								handles: '[data-collapsible-handle]',
+								content: '[data-collapsible-content]',
+								ignore: '.ignore-collapsible, .ignore',
+								save_state: false
+							}).on('collapsestop.collapsible expandstop.collapsible', collapsingChanged);
+						} else {
+							list.find('li:has([data-collapsible-content]):has([data-collapsible-handle])')
+								.addClass('instance')
+								.trigger('updatesize.collapsible')
+								.trigger('setsize.collapsible');
+							list.trigger('restore.collapsible');
+						}
+						restoreCollapsing();
+					}
+					updateActionBar(li);
+				}
+			}).error(function (data) {
+				notifier.trigger('attach.notify', [
+					S.Language.get('Error while rendering field “{$title}”: {$error}', {
+						title: label,
+						error: data.statusText || ''
+					}),
+					'error'
+				]);
+			}).always(function () {
+				isRendering = false;
+			});
+		};
+
 		var saveValues = function (val) {
 			var oldValue = hidden.val();
 			if ($.isArray(val)) {
@@ -398,106 +272,21 @@
 				if ((!!required && count >= minimum) ||
 					(!required && (count >= minimum || count === 0))) {
 					ajaxSave();
-				}
-				else {
+				} else {
 					render();
 				}
 			}
 			return isDifferent;
 		};
 
-		var updateActionBar = function (li) {
-			var createLinkBtn = t.find('[data-create],[data-link],.sections-selection, [data-interactive].search');
-			var maxReached = !!maximum && li.length >= maximum;
-			createLinkBtn.add(sections)[maxReached ? 'hide' : 'show']();
-		};
-
-		var updateSearchUrl = function () {
-			t.find('[data-search]').attr('data-url', searchurl(sections.val(), hidden.val()));
-		};
-
-		var isRendering = false;
-		var render = function () {
-			if (isRendering) {
-				return;
-			}
-			if (!hidden.val()) {
-				updateActionBar($());
-				return;
-			}
-			isRendering = true;
-			$.get(renderurl(hidden.val(), fieldId, debug)).done(function (data) {
-				data = $(data);
-				var error = data.find('error');
-				var li = data.find('li');
-				var fx = !li.length ? 'addClass' : 'removeClass';
-
-				if (!!error.length) {
-					list.empty().append(
-						$('<li />').text(
-							S.Language.get('Error while rendering field “{$title}”: {$error}', {
-								title: label,
-								error: error.text()
-							})
-						).addClass('error invalid')
-					);
-					frame.addClass('empty');
-				}
-				else {
-					list.empty().append(li);
-					frame[fx]('empty');
-
-					if (!list.hasClass('orderable') && !!list.find('[data-orderable-handle]').length) {
-						list.symphonyOrderable({
-							items: 'li:has([data-orderable-handle])',
-							handles: '[data-orderable-handle]',
-							ignore: '.ignore-orderable, .ignore',
-						});
-					}
-					if (list.is('[data-collapsible]') && !!list.find('[data-collapsible-handle]').length) {
-						if (!list.hasClass('collapsible')) {
-							list.symphonyCollapsible({
-								items: 'li:has([data-collapsible-content]):has([data-collapsible-handle])',
-								handles: '[data-collapsible-handle]',
-								content: '[data-collapsible-content]',
-								ignore: '.ignore-collapsible, .ignore',
-								save_state: false
-							}).on('collapsestop.collapsible expandstop.collapsible', collapsingChanged);
-						}
-						else {
-							list.find('li:has([data-collapsible-content]):has([data-collapsible-handle])')
-								.addClass('instance')
-								.trigger('updatesize.collapsible')
-								.trigger('setsize.collapsible');
-							list.trigger('restore.collapsible');
-						}
-						restoreCollapsing();
-					}
-					updateActionBar(li);
-					updateSearchUrl();
-				}
-			}).error(function (data) {
-				notifier.trigger('attach.notify', [
-					S.Language.get('Error while rendering field “{$title}”: {$error}', {
-						title: label,
-						error: data.statusText || ''
-					}),
-					'error'
-				]);
-			}).always(function () {
-				isRendering = false;
-			});
-		};
 		var self = {
 			link: function (entryId) {
 				var val;
 				if (!!replaceId) {
 					val = replace(values(), entryId, replaceId);
-				}
-				else if (insertPosition !== undefined) {
+				} else if (insertPosition !== undefined) {
 					val = insert(values(), insertPosition, entryId);
-				}
-				else {
+				} else {
 					val = link(values(), entryId);
 				}
 
@@ -533,7 +322,7 @@
 			if (!list.children().length) {
 				frame.addClass('empty');
 			}
-		}
+		};
 
 		var getInsertPosition = function (t) {
 			// Has data insert attribute but no value in it
@@ -554,7 +343,7 @@
 			syncCurrent(self);
 			replaceId = undefined;
 			insertPosition = getInsertPosition(t);
-			openIframe(t.attr('data-create') || sections.val(), 'new');
+			openIframe(t.attr('data-section'), 'new');
 			e.stopPropagation();
 			e.preventDefault();
 		};
@@ -564,7 +353,7 @@
 			syncCurrent(self);
 			replaceId = undefined;
 			insertPosition = getInsertPosition(t);
-			openIframe(t.attr('data-link') || sections.val());
+			openIframe(t.attr('data-section'));
 			e.stopPropagation();
 			e.preventDefault();
 		};
@@ -601,7 +390,7 @@
 			if (!!unlink(values(), id).changed) {
 				unlinkAndUpdateUI(li);
 				replaceId = id;
-				openIframe(sections.val());
+				openIframe(t.attr('data-section'));
 			}
 			e.stopPropagation();
 			e.preventDefault();
@@ -612,9 +401,8 @@
 			syncCurrent(self);
 			var li = $(this).closest('li');
 			var id = t.attr('data-delete') || li.attr('data-entry-id');
-			var section = t.attr('data-section') || li.attr('data-section');
 			var confirmMsg = t.attr('data-message') || S.Language.get('Are you sure you want to un-link AND delete this entry?');
-			if (confirm(confirmMsg)) {
+			if (window.confirm(confirmMsg)) {
 				ajaxDelete(id, function () {
 					unlinkAndUpdateUI(li, id);
 				});
@@ -623,15 +411,60 @@
 			e.preventDefault();
 		};
 
+		var resetSearchState = function () {
+			var ctn = t.find('.search-ctn');
+			ctn.removeClass('is-open');
+			ctn.removeClass('is-search-section');
+			ctn.removeClass('is-search-results');
+			ctn.find('input').val('');
+		};
+
 		var searchChange = function (e) {
 			syncCurrent(self);
 			var input = t.find('[data-search]');
 			var id = input.attr('data-value');
 			input.val('');
+			resetSearchState();
 			if (!!id) {
 				replaceId = undefined;
 				insertPosition = undefined;
 				self.link(id);
+			}
+		};
+
+		var btnSearchClick = function (e) {
+			var t = $(this);
+			var ctn = t.closest('.search-ctn');
+			ctn.addClass('is-open is-search-section').removeClass('is-search-results');
+			e.stopPropagation();
+			e.preventDefault();
+		};
+
+		var btnSearchSectionClick = function (e) {
+			var t = $(this);
+			var ctn = t.closest('.search-ctn');
+			var indicator = ctn.find('.search-indicator');
+
+			indicator.text(indicator.attr('data-text') + t.attr('data-section-name'));
+
+			ctn.removeClass('is-search-section');
+			ctn.addClass('is-search-results');
+
+			updateSearchUrl(t.attr('data-section'));
+
+			setTimeout(function () {
+				ctn.find('input').focus();
+			}, 0);
+
+			e.stopPropagation();
+			e.preventDefault();
+		};
+
+		var onWindowClick = function (e) {
+			var target = $(e.target);
+
+			if (!target.is('.search-ctn') && !target.closest('.search-ctn').length) {
+				resetSearchState();
 			}
 		};
 
@@ -641,15 +474,14 @@
 			}
 			try {
 				window.localStorage.setItem(key, value);
-			}
-			catch (ex) {
+			} catch (ex) {
 				console.error(ex);
 			}
 		};
 
-		var sectionChanged = function (e) {
+		/* var sectionChanged = function (e) {
 			saveToStorage(storageKeys.selection, sections.val());
-		};
+		}; */
 
 		var collapsingChanged = function (e) {
 			var collapsed = [];
@@ -721,7 +553,7 @@
 				var hasError = !data || !data.ok || !!data.error;
 				var hasAssoc = hasError && data.assoc;
 				if (hasAssoc) {
-					if (confirm(data.error)) {
+					if (window.confirm(data.error)) {
 						ajaxDelete(entryToDeleteId, success, true);
 					}
 					return;
@@ -767,7 +599,11 @@
 		t.on('click', '[data-edit]', btnEditClick);
 		t.on('click', '[data-replace]', btnReplaceClick);
 		t.on('click', '[data-delete]', btnDeleteClick);
-		updateSearchUrl();
+		t.on('click', '[data-search-btn]', btnSearchSectionClick);
+
+		t.on('click', '.search-trigger', btnSearchClick);
+		$(window.document).on('click', onWindowClick);
+
 		S.Interface.Suggestions.init(t, '[data-search]', {
 			editSuggestion: function (suggestion, index, data, result) {
 				var value = data.value.split(':');
@@ -775,32 +611,16 @@
 				suggestion.attr('data-value', id).text(value.join(':'));
 			}
 		});
+
 		t.on('mousedown.suggestions', '.suggestions li', searchChange);
+
 		t.on('keydown.suggestions', '[data-search]', function (e) {
 			if (e.which === 13) {
 				searchChange(e);
 			}
 		});
 
-		if (sections.find('option').length < 2) {
-			sections.attr('disabled', 'disabled').addClass('disabled irrelevant');
-			sections.after($('<label />').text(sections.text()).addClass('sections sections-selection'));
-		}
-		else {
-			if (S.Support.localStorage) {
-				var lastSelection = window.localStorage.getItem(storageKeys.selection);
-				if (!!lastSelection) {
-					sections.find('option[value="' + lastSelection + '"]')
-						.attr('selected', 'selected');
-					updateSearchUrl();
-				}
-				sections.on('change', sectionChanged);
-			}
-			sections.on('change', updateSearchUrl);
-		}
-
 		frame.on('orderstop.orderable', '*', function () {
-			var oldValue = hidden.val();
 			var val = [];
 			list.find('li[data-entry-id]').each(function () {
 				var id = $(this).attr('data-entry-id');
@@ -852,8 +672,7 @@
 						).addClass('error invalid')
 					);
 					frame.addClass('empty');
-				}
-				else {
+				} else {
 					list.empty().append(li);
 					frame[fx]('empty');
 				}
@@ -938,7 +757,7 @@
 		var ajaxSave = function (op, entryId, timestamp) {
 			clearTimeout(ajaxSaveTimeout);
 			ajaxSaveTimeout = setTimeout(function ajaxSaveTimer() {
-				var eId = Symphony.Context.get('env').entry_id;
+				var eId = S.Context.get('env').entry_id;
 				if (!eId) {
 					return;
 				}
@@ -997,4 +816,4 @@
 
 	$(init);
 
-})(jQuery, Symphony);
+})(jQuery, window.Symphony);

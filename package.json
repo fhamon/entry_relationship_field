@@ -1,0 +1,29 @@
+{
+  "name": "entry_relationship_field",
+  "version": "3.0.0",
+  "description": "A new way to create master-details (parent -> children) relationships with Symphony's sections.",
+  "main": "Gruntfile.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deuxhuithuit/entry_relationship_field.git"
+  },
+  "author": "Deux Huit Huit",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/deuxhuithuit/entry_relationship_field/issues"
+  },
+  "homepage": "https://github.com/deuxhuithuit/entry_relationship_field#readme",
+  "devDependencies": {
+    "grunt": "^1.0.4",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-less": "^2.0.0",
+    "grunt-contrib-watch": "^1.1.0",
+    "jit-grunt": "^0.10.0"
+  }
+}

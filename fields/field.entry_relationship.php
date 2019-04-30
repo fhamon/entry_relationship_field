@@ -1133,7 +1133,7 @@
 
 		private function createActionBarMenu($sections)
 		{
-			$wrap = new XMLElement('div');
+			$wrap = new XMLElement('div', null, array('class' => 'action-bar'));
 			$actionBar = '';
 			$modeFooter = $this->get('mode_footer');
 			if ($modeFooter) {
@@ -1145,53 +1145,65 @@
 				$actionBar = ERFXSLTUTilities::processXSLT($this, null, $section->get('handle'), null, 'mode_footer', isset($_REQUEST['debug']), 'field');
 			}
 			if (empty($actionBar)) {
-				$fieldset = new XMLElement('fieldset');
-				$fieldset->setAttribute('class', 'single');
+				$inner = new XMLElement('div', null, array('class' => 'inner'));
 				$div = new XMLElement('div');
 
 				if ($this->is('allow_search')) {
-					$searchWrap = new XMLElement('div');
-					$searchWrap->setAttribute('data-interactive', 'data-interactive');
-					$searchWrap->setAttribute('class', 'search');
-					$searchInput = Widget::Input('', null, 'text', array(
-						'class' => 'search',
-						'data-search' => '',
-						'placeholder' => __('Search for entries')
-					));
-					$searchWrap->appendChild($searchInput);
-					$searchSuggestions = new XMLElement('ul');
-					$searchSuggestions->setAttribute('class', 'suggestions');
-					$searchWrap->appendChild($searchSuggestions);
-					$fieldset->appendChild($searchWrap);
+					$searchCtn = new XMLElement('div', null, array('class' => 'search-ctn'));
+					$searchUi = new XMLElement('div', null, array('class' => 'search-ui'));
+
+					$trigger = new XMLElement('button', '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="8" stroke="currentColor" stroke-width="2"/><path d="M15 15L19 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>', array('class' => 'search-trigger'));
+					$searchCtn->appendChild($trigger);
+
+					$searchSections = new XMLElement('div', null, array('class' => 'search-sections'));
+
+					foreach ($sections as $section) {
+						$searchSections->appendChild(new XMLElement('button', $section->get('icon') . $section->get('name'), array(
+							'data-search-btn' => '',
+							'data-section' => $section->get('handle'),
+							'data-section-name' => $section->get('name'),
+						)));
+					}
+
+					$searchUi->appendChild($searchSections);
+
+
+					$searchIndicator = new XMLElement('div', null, array('class' => 'search-indicator', 'data-text' => __('Search in: ')));
+					$searchUi->appendChild($searchIndicator);
+
+					$input = new XMLElement('input', null, array('class' => 'search-input', 'type' => 'text', 'data-search' => ''));
+					$searchUi->appendChild($input);
+
+					$searchCtn->appendChild($searchUi);
+
+					$inner->appendChild($searchCtn);
 				}
 
-				if ($this->is('allow_new') || $this->is('allow_link') || $this->is('allow_search')) {
-					$selectWrap = new XMLElement('div');
-					$selectWrap->appendChild(new XMLElement('span', __('Related section: '), array('class' => 'sections-selection')));
-					$options = array();
-					foreach ($sections as $section) {
-						$options[] = array($section->get('handle'), false, $section->get('name'));
-					}
-					$select = Widget::Select('', $options, array('class' => 'sections sections-selection'));
-					$selectWrap->appendChild($select);
-					$div->appendChild($selectWrap);
-				}
 				if ($this->is('allow_new')) {
-					$div->appendChild(new XMLElement('button', __('Create new'), array(
-						'type' => 'button',
-						'class' => 'create',
-						'data-create' => '',
-					)));
+					$sectionButtons = [];
+
+					foreach ($sections as $section) {
+						$sectionButtons[] = new XMLElement('button', $section->get('icon') . $section->get('name'), array(
+							'data-create' => '',
+							'data-section' => $section->get('handle')
+						));
+					}
+
+					$inner->appendChild(Widget::Modal($sectionButtons, 'bottom right', array(), '<svg width="21" height="20" viewBox="0 0 21 20" fill="none"><path d="M10.3916 1V19M1.3916 10C9.20209 10 11.5811 10 19.3916 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'));
 				}
 				if ($this->is('allow_link')) {
-					$div->appendChild(new XMLElement('button', __('Link to entry'), array(
-						'type' => 'button',
-						'class' => 'link',
-						'data-link' => '',
-					)));
+					$sectionButtons = [];
+
+					foreach ($sections as $section) {
+						$sectionButtons[] = new XMLElement('button', $section->get('icon') . $section->get('name'), array(
+							'data-link' => '',
+							'data-section' => $section->get('handle')
+						));
+					}
+
+					$inner->appendChild(Widget::Modal($sectionButtons, 'bottom right', array(), '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10.8975 15.0021L8.51288 17.3694C7.05134 18.8203 4.5898 18.8203 3.05134 17.3694C1.5898 15.9185 1.5898 13.4748 3.05134 11.9475L6.28211 8.74028C7.74365 7.28937 10.2052 7.28937 11.7437 8.74028" stroke="currentColor" stroke-width="2" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.97442 5.07484L12.436 2.70757C13.8975 1.25666 16.359 1.25666 17.8975 2.70757C19.359 4.15848 19.359 6.60211 17.8975 8.12939L14.6667 11.3367C13.2052 12.7876 10.7437 12.7876 9.20519 11.3367" stroke="currentColor" stroke-width="2" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/></svg>'));
 				}
-				$fieldset->appendChild($div);
-				$wrap->appendChild($fieldset);
+				$wrap->appendChild($inner);
 			}
 			else {
 				$wrap->setValue($actionBar);
@@ -1399,8 +1411,11 @@
 				$wrapper->appendChild($label);
 			}
 
-			$wrapper->appendChild($this->createEntriesList($entriesId));
-			$wrapper->appendChild($this->createActionBarMenu($sections));
+			$border = new XMLElement('div', null, array('class' => 'field-border'));
+			$border->appendChild($this->createEntriesList($entriesId));
+			$border->appendChild($this->createActionBarMenu($sections));
+
+			$wrapper->appendChild($border);
 			$wrapper->appendChild($this->createEntriesHiddenInput($data));
 			$wrapper->setAttribute('data-value', $data['entries']);
 			$wrapper->setAttribute('data-field-id', $this->get('id'));

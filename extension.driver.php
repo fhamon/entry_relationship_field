@@ -74,26 +74,26 @@
 			// publish page
 			if($c['driver'] == 'publish') {
 				Administration::instance()->Page->addStylesheetToHead(
-					URL . '/extensions/entry_relationship_field/assets/publish.entry_relationship_field.css',
+					URL . '/extensions/entry_relationship_field/assets/css/publish.entry_relationship_field.css',
 					'screen',
 					time() + 1,
 					false
 				);
 				Administration::instance()->Page->addScriptToHead(
-					URL . '/extensions/entry_relationship_field/assets/publish.entry_relationship_field.js',
+					URL . '/extensions/entry_relationship_field/assets/js/publish.entry_relationship_field.js',
 					10,
 					false
 				);
 
 			} else if ($c['driver'] == 'blueprintssections') {
 				Administration::instance()->Page->addStylesheetToHead(
-					URL . '/extensions/entry_relationship_field/assets/section.entry_relationship_field.css',
+					URL . '/extensions/entry_relationship_field/assets/css/section.entry_relationship_field.css',
 					'screen',
 					time() + 1,
 					false
 				);
 				Administration::instance()->Page->addScriptToHead(
-					URL . '/extensions/entry_relationship_field/assets/section.entry_relationship_field.js',
+					URL . '/extensions/entry_relationship_field/assets/js/section.entry_relationship_field.js',
 					time(),
 					false
 				);

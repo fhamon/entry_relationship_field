@@ -142,50 +142,74 @@
 							'data-orderable-handle' => '',
 							'data-collapsible-handle' => ''
 						));
-						$title = new XMLElement('h4', null, array('class' => 'ignore-collapsible'));
+						$inner = new XMLElement('div', null, array('class' => 'inner'));
+						$leftCol = new XMLElement('div', null, array('class' => 'left-col'));
+						$rightCol = new XMLElement('div', null, array('class' => 'right-col'));
+
+						$leftCol->appendChild(new XMLElement('button', Widget::SVGIcon('drag'), array(
+							'class' => 'grab-handle'
+						)));
+
+						$title = new XMLElement('h4', null, array('class' => 'title'));
 						if (!$parentField->get('mode_header')) {
 							$title->appendChildArray($this->buildDefaultTitle($entry, $entryVisibleFields, $entryFields));
 						}
 						else {
 							$title->setValue(ERFXSLTUTilities::processXSLT($parentField, $entry, $entrySectionHandle, $entryFields, 'mode_header'));
 						}
-						$header->appendChild($title);
 
-						$options = new XMLElement('div', null, array('class' => 'destructor'));
+						$leftCol->appendChild($title);
+						$rightCol->appendChild(new XMLElement('span', $this->getSectionName($entry), array('class' => 'section-name')));
+
+						$options =[];
+
 						if ($parentField->is('allow_edit')) {
 							$title->setAttribute('data-edit', $entryId);
-							$options->appendChild(new XMLElement('a', __('Edit'), array(
-								'class' => 'edit ignore-collapsible',
+							$options[] = new XMLElement('button', __('Edit'), array(
+								'class' => 'edit ',
 								'data-edit' => $entryId,
-							)));
+								'data-section' => $entrySectionHandle,
+							));
 						}
 						if ($parentField->is('allow_delete')) {
-							$options->appendChild(new XMLElement('a', __('Delete'), array(
-								'class' => 'delete ignore-collapsible',
+							$options[] = new XMLElement('button', __('Delete'), array(
+								'class' => 'delete ',
 								'data-delete' => $entryId,
-							)));
+								'data-section' => $entrySectionHandle,
+							));
 						}
 						if ($parentField->is('allow_link')) {
-							$options->appendChild(new XMLElement('a', __('Replace'), array(
-								'class' => 'unlink ignore-collapsible',
+							$options[] = new XMLElement('button', __('Replace'), array(
+								'class' => 'unlink ',
 								'data-replace' => $entryId,
-							)));
+								'data-section' => $entrySectionHandle,
+							));
 						}
 						if ($parentField->is('allow_goto')) {
-							$options->appendChild(new XMLElement('a', __('Go to'), array(
-								'class' => 'goto ignore-collapsible',
+							$options[] = new XMLElement('button', __('Go to'), array(
+								'class' => 'goto ',
 								'data-goto' => $entryId,
-							)));
+								'data-section' => $entrySectionHandle,
+							));
 						}
 						if ($parentField->is('allow_delete') ||
 							$parentField->is('allow_link') || $parentField->is('allow_unlink') ||
 							$parentField->is('allow_search')) {
-							$options->appendChild(new XMLElement('a', __('Un-link'), array(
-								'class' => 'unlink ignore-collapsible',
+							$options[] = new XMLElement('button', __('Un-link'), array(
+								'class' => 'unlink ',
 								'data-unlink' => $entryId,
-							)));
+								'data-section' => $entrySectionHandle,
+							));
 						}
-						$header->appendChild($options);
+
+						if (!empty($options)) {
+							$modal = Widget::Modal($options, 'top right');
+							$rightCol->appendChild($modal);
+						}
+
+						$inner->appendChild($leftCol);
+						$inner->appendChild($rightCol);
+						$header->appendChild($inner);
 						$li->appendChild($header);
 					}
 
@@ -238,9 +262,20 @@
 		}
 
 		public function buildDefaultTitle($entry, $entryVisibleFields, $entryFields) {
-			return array(
-				new XMLElement('strong', $this->getEntryTitle($entry, $entryVisibleFields, $entryFields), array('class' => 'ignore-collapsible')),
-				new XMLElement('span', $this->getSectionName($entry), array('class' => 'ignore-collapsible'))
-			);
+			$entrySection = $this->sectionManager
+						->select()
+						->section($entry->get('section_id'))
+						->execute()
+						->next();
+			
+			$entrySection->get('icon');
+
+			if (!empty($entrySection->get('icon'))) {
+				$title[] = new XMLElement('span', $entrySection->get('icon'), array('class' => 'icon'));
+			}
+
+			$title[] = new XMLElement('strong', $this->getEntryTitle($entry, $entryVisibleFields, $entryFields));
+
+			return $title;
 		}
 	}
