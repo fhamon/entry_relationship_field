@@ -1189,7 +1189,17 @@
 						));
 					}
 
-					$inner->appendChild(Widget::Modal($sectionButtons, 'bottom right', array(), '<svg width="21" height="20" viewBox="0 0 21 20" fill="none"><path d="M10.3916 1V19M1.3916 10C9.20209 10 11.5811 10 19.3916 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'));
+					$svg = '<svg width="21" height="20" viewBox="0 0 21 20" fill="none"><path d="M10.3916 1V19M1.3916 10C9.20209 10 11.5811 10 19.3916 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+
+					if (count($sections) > 1) {
+						$inner->appendChild(Widget::Modal($sectionButtons, 'bottom right', array(), $svg));
+					} else {
+						$inner->appendChild(new XMLElement('button', $svg, array(
+							'data-create' => '',
+							'data-section' => (current($sections))->get('handle')
+						)));
+					}
+
 				}
 				if ($this->is('allow_link')) {
 					$sectionButtons = [];
@@ -1201,11 +1211,20 @@
 						));
 					}
 
-					$inner->appendChild(Widget::Modal($sectionButtons, 'bottom right', array(), '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10.8975 15.0021L8.51288 17.3694C7.05134 18.8203 4.5898 18.8203 3.05134 17.3694C1.5898 15.9185 1.5898 13.4748 3.05134 11.9475L6.28211 8.74028C7.74365 7.28937 10.2052 7.28937 11.7437 8.74028" stroke="currentColor" stroke-width="2" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.97442 5.07484L12.436 2.70757C13.8975 1.25666 16.359 1.25666 17.8975 2.70757C19.359 4.15848 19.359 6.60211 17.8975 8.12939L14.6667 11.3367C13.2052 12.7876 10.7437 12.7876 9.20519 11.3367" stroke="currentColor" stroke-width="2" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/></svg>'));
+					$svg = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10.8975 15.0021L8.51288 17.3694C7.05134 18.8203 4.5898 18.8203 3.05134 17.3694C1.5898 15.9185 1.5898 13.4748 3.05134 11.9475L6.28211 8.74028C7.74365 7.28937 10.2052 7.28937 11.7437 8.74028" stroke="currentColor" stroke-width="2" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.97442 5.07484L12.436 2.70757C13.8975 1.25666 16.359 1.25666 17.8975 2.70757C19.359 4.15848 19.359 6.60211 17.8975 8.12939L14.6667 11.3367C13.2052 12.7876 10.7437 12.7876 9.20519 11.3367" stroke="currentColor" stroke-width="2" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+					if (count($sections) > 1) {
+						$inner->appendChild(Widget::Modal($sectionButtons, 'bottom right', array(), $svg));
+					} else {
+						$inner->appendChild(new XMLElement('button', $svg, array(
+							'data-link' => '',
+							'data-section' => (current($sections))->get('handle')
+						)));
+					}
 				}
+
 				$wrap->appendChild($inner);
-			}
-			else {
+			} else {
 				$wrap->setValue($actionBar);
 			}
 

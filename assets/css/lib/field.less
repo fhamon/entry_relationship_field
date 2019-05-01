@@ -24,6 +24,10 @@
 		ul > {
 			margin: 0;
 
+			&:not(:empty) {
+				min-height: 0 !important;
+			}
+
 			li {
 				padding: 0 !important;
 				margin: 0;
@@ -115,12 +119,18 @@
 
 	.action-bar {
 		padding: var(--spacing-smallest) 0;
+
+		&.max-reached {
+			pointer-events: none;
+			opacity: 0.5;
+		}
+
 		.inner {
 			display: flex;
 			align-items: center;
 			justify-content: flex-end;
 
-			.search-trigger {
+			.search-trigger, > button {
 				display: flex;
 				align-items: center;
 				background-color: transparent;
@@ -128,6 +138,11 @@
 				margin: 0;
 				color: var(--color-main);
 				border-radius: 100%;
+				margin-right: var(--spacing-smallest);
+
+				&:last-of-type {
+					margin-right: 0;
+				}
 
 				&:hover {
 					background-color: var(--color-main-lightest);
@@ -152,8 +167,8 @@
 		.search-ctn {
 			display: flex;
 			align-items: center;
-			margin-right: var(--spacing-smallest);
 			position: relative;
+			margin-right: var(--spacing-smallest);
 
 			&.is-open {
 				.search-ui {
@@ -191,7 +206,6 @@
 				border: 1px solid var(--color-main-lightest);
 				overflow: hidden;
 				flex-direction: column;
-
 
 				.search-sections {
 					display: none;

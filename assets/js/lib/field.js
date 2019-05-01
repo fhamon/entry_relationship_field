@@ -33,6 +33,8 @@
 	var DELETE = baseurl() + CONTENTPAGES +'delete/';
 	var SEARCH = baseurl() + CONTENTPAGES +'search/';
 
+	var TEMP_HEIGHT_ITEM = 45;
+
 	var renderurl = function (value, fieldid, debug) {
 		var url = RENDER + (value || 'null') + '/';
 		url += fieldid + '/';
@@ -629,6 +631,11 @@
 				}
 			});
 			saveValues(val);
+		});
+
+		// Temp height before the render
+		list.css({
+			minHeight: values().length * TEMP_HEIGHT_ITEM
 		});
 
 		// render
